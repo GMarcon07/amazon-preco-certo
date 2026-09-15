@@ -58,7 +58,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main || true
           git add data/amazon_prices.db
           # Só faz commit se houver novos dados registados
           git diff --staged --quiet || git commit -m "chore: atualizar historico de precos [skip ci]"
-          git push
+          git push origin main || true
