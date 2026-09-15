@@ -89,6 +89,11 @@ def main():
         help="Envia uma mensagem de teste para o webhook do Discord configurado.",
     )
     parser.add_argument(
+        "--test-product-alert",
+        action="store_true",
+        help="Envia um cartão de alerta de produto simulado ao Discord para ver o aspeto visual.",
+    )
+    parser.add_argument(
         "--stats",
         action="store_true",
         help="Mostra estatísticas da base de dados.",
@@ -102,13 +107,14 @@ def main():
     args = parser.parse_args()
 
     # Se nenhum argumento for passado, mostra o menu de ajuda
-    if not (args.scan or args.daemon or args.test_discord or args.stats):
+    if not (args.scan or args.daemon or args.test_discord or args.test_product_alert or args.stats):
         parser.print_help()
         console.print("\n[yellow]💡 Exemplo de uso rápido:[/yellow]")
-        console.print("  [cyan]python run.py --test-discord[/cyan]   # Testar webhook do Discord")
-        console.print("  [cyan]python run.py --scan[/cyan]           # Executar uma ronda de teste agora")
-        console.print("  [cyan]python run.py --daemon[/cyan]         # Iniciar monitorização contínua 24/7")
-        console.print("  [cyan]python run.py --stats[/cyan]          # Ver dados acumulados")
+        console.print("  [cyan]python run.py --test-discord[/cyan]         # Testar webhook do Discord")
+        console.print("  [cyan]python run.py --test-product-alert[/cyan]  # Enviar exemplo real de produto ao Discord")
+        console.print("  [cyan]python run.py --scan[/cyan]                 # Executar uma ronda de teste agora")
+        console.print("  [cyan]python run.py --daemon[/cyan]               # Iniciar monitorização contínua 24/7")
+        console.print("  [cyan]python run.py --stats[/cyan]                # Ver dados acumulados")
         sys.exit(0)
 
     settings = load_settings()
@@ -127,6 +133,68 @@ def main():
             console.print("[bold green]✅ Sucesso![/bold green] Verifique o seu canal do Discord.")
         else:
             console.print("[bold red]❌ Falha ao enviar mensagem.[/bold red] Verifique a URL do webhook.")
+        return
+
+    # 1.1 Teste de Alerta com Produto Real da Base de Dados
+    if args.test_product_alert:
+        if not settings.discord_webhook_url:
+            console.print("[bold red]❌ ERRO:[/bold red] DISCORD_WEBHOOK_URL não configurado!")
+            sys.exit(1)
+        console.print("[cyan]A procurar o produto real mais recente recolhido da Amazon na base de dados...[/cyan]")
+        import sqlite3
+        from src.scrapers.base import ScrapedProduct
+        from src.detector.engine import AnomalyResult
+
+        conn = sqlite3.connect(str(settings.database_path))
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("""
+            SELECT p.asin, p.title, p.url, p.image_url, p.rating, p.review_count, 
+                   p.seller_name, p.category_id, ph.price, ph.strikethrough_price
+            FROM products p
+            JOIN price_history ph ON p.asin = ph.asin
+            WHERE ph.price > 0
+            ORDER BY ph.recorded_at DESC LIMIT 1
+        """).fetchone()
+        conn.close()
+
+        if not row:
+            console.print("[bold red]❌ Nenhum produto encontrado na base de dados. Execute 'python run.py --scan' primeiro.[/bold red]")
+            sys.exit(1)
+
+        real_price = row["price"]
+        ref_price = row["strikethrough_price"] if row["strikethrough_price"] else round(real_price * 1.25, 2)
+        disc_pct = round((ref_price - real_price) / ref_price, 4)
+
+        real_prod = ScrapedProduct(
+            asin=row["asin"],
+            title=row["title"],
+            url=row["url"],
+            image_url=row["image_url"],
+            current_price=real_price,
+            strikethrough_price=ref_price,
+            discount_pct=disc_pct,
+            rating=row["rating"],
+            review_count=row["review_count"],
+            seller_name=row["seller_name"] or "Amazon / Marketplace",
+            is_prime=True,
+            category_id=row["category_id"],
+        )
+
+        real_anomaly = AnomalyResult(
+            is_anomaly=True,
+            anomaly_type="REAL_PRICE_VERIFICATION",
+            current_price=real_price,
+            reference_price=ref_price,
+            discount_pct=disc_pct,
+            reason=f"✅ Verificação de Preço Real: Preço exato recolhido da Amazon no momento do scan ({real_price:.2f}€).",
+        )
+
+        notifier = DiscordNotifier(settings.discord_webhook_url)
+        ok = notifier.send_alert(real_prod, real_anomaly, f"Categoria: {row['category_id']}")
+        if ok:
+            console.print(f"[bold green]✅ Alerta enviado ao Discord com o PREÇO 100% REAL: {real_price:.2f}€[/bold green]")
+        else:
+            console.print("[bold red]❌ Falha ao enviar cartão de produto.[/bold red]")
         return
 
     # 2. Estatísticas
