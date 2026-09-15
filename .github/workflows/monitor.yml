@@ -1,0 +1,51 @@
+name: Monitor de Falhas de Preco Amazon
+
+on:
+  # Agendamento automatico: executa a cada 30 minutos (cron em UTC)
+  schedule:
+    - cron: '*/30 * * * *'
+  
+  # Permite disparar o scan manualmente a qualquer momento atraves do botao "Run workflow"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Clonar Repositorio
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Instalar Dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🌐 Instalar Chromium e Dependencias de Sistema do Playwright
+        run: |
+          playwright install --with-deps chromium
+
+      - name: 🚀 Executar Varrimento da Amazon e Deteção de Falhas
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python run.py --scan
+
+      - name: 💾 Guardar e Atualizar Base de Dados SQLite no Repositorio
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/amazon_prices.db
+          # Só faz commit se houver novos dados registados
+          git diff --staged --quiet || git commit -m "chore: atualizar historico de precos [skip ci]"
+          git push

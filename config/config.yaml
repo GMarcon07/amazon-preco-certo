@@ -1,0 +1,199 @@
+amazon:
+  base_url: "https://www.amazon.es"
+  locale: "es-ES"
+  timezone: "Europe/Madrid"
+  headless: true
+  page_timeout_ms: 30000
+  delay_between_requests_min: 3.0
+  delay_between_requests_max: 6.5
+  max_pages_per_category: 3
+
+detection:
+  # Desconto riscado oficial (PVP) mínimo exigido (ex: 0.60 = 60%)
+  min_strikethrough_discount: 0.60
+  # Queda real face à média histórica individual do produto (ex: 0.40 = 40% abaixo)
+  min_historical_discount: 0.40
+  # Queda face à mediana de produtos semelhantes da mesma categoria
+  min_category_discount: 0.50
+  # Poupança mínima absoluta em euros (evita 'falsos' descontos em coisas baratas)
+  min_saving_euros: 50.0
+  # Mínimo de reviews para o produto ser confiável (elimina scams de lojas recém-criadas)
+  min_review_count: 25
+  # Avaliação mínima em estrelas
+  min_rating: 3.8
+  # Intervalo de cooldown em horas para não repetir alertas do mesmo ASIN
+  alert_cooldown_hours: 24
+
+scheduler:
+  # Intervalo entre rondas completas de scan em minutos
+  interval_minutes: 30
+  # Jitter aleatório em segundos adicionado/subtraído ao intervalo
+  jitter_seconds: 120
+
+# Palavras-chave globais que identificam acessórios ou itens falsos a ignorar
+blacklist_keywords:
+  - "funda"
+  - "capa"
+  - "case"
+  - "protector"
+  - "pelicula"
+  - "cristal templado"
+  - "cable"
+  - "cabo"
+  - "adaptador"
+  - "soporte"
+  - "suporte"
+  - "vinilo"
+  - "pegatina"
+  - "sticker"
+  - "skin"
+  - "carcasa"
+  - "almohadilla"
+  - "keycap"
+  - "keycaps"
+  - "dock"
+  - "bolsa"
+  - "mochila"
+  - "stand"
+  - "hub usb"
+  - "conector"
+  - "limpiador"
+
+# Foco exclusivo em Gama Média-Alta e Alta
+categories:
+  - id: "gpu"
+    name: "Placas Gráficas (Média-Alta e Alta)"
+    search_query: "rtx 4070 4080 4090 rx 7800 7900"
+    url_path: "/s?k=rtx+4070+4080+4090+rx+7800+7900&i=computers"
+    min_price_floor: 280.0
+    category_blacklist:
+      - "cooler"
+      - "ventilador"
+      - "suporte gpu"
+      - "thermal pad"
+      - "rtx 3050"
+      - "gtx 1650"
+      - "rx 6400"
+      - "rx 6500"
+      - "gt 710"
+      - "gt 1030"
+
+  - id: "cpu"
+    name: "Processadores (Média-Alta e Alta: Ryzen 7/9, i7/i9)"
+    search_query: "ryzen 7 ryzen 9 intel i7 i9 7800x3d 9800x3d"
+    url_path: "/s?k=ryzen+7+ryzen+9+intel+i7+i9+7800x3d&i=computers"
+    min_price_floor: 160.0
+    category_blacklist:
+      - "pasta termica"
+      - "cooler"
+      - "disipador"
+      - "celeron"
+      - "pentium"
+      - "ryzen 3"
+      - "core i3"
+
+  - id: "monitors"
+    name: "Monitores Gaming (Média-Alta e Alta: 2K/4K, OLED, 165Hz+)"
+    search_query: "monitor gaming oled 1440p 4k 240hz 27 pulgadas"
+    url_path: "/s?k=monitor+gaming+oled+1440p+4k+240hz&i=computers"
+    min_price_floor: 180.0
+    category_blacklist:
+      - "brazo monitor"
+      - "peana"
+      - "filtro privacidad"
+      - "60hz"
+      - "75hz"
+      - "1080p 21"
+      - "22 pulgadas"
+
+  - id: "controllers"
+    name: "Consolas e Comandos Elite (PS5, Xbox Series X, Switch OLED, Elite/Edge)"
+    search_query: "consola ps5 xbox series x switch oled dualsense edge elite controller"
+    url_path: "/s?k=consola+ps5+series+x+switch+oled+dualsense+edge+elite&i=videogames"
+    min_price_floor: 60.0
+    category_blacklist:
+      - "grips"
+      - "tapas joystick"
+      - "bateria recargable"
+      - "funda mando"
+      - "carcasa silicona"
+
+  - id: "keyboards_mice"
+    name: "Teclados e Ratos Topo de Gama (G Pro X, DeathAdder V3, Apex Pro, Wooting)"
+    search_query: "g pro x superlight deathadder v3 viper v2 apex pro wooting teclado mecanico"
+    url_path: "/s?k=g+pro+x+superlight+deathadder+v3+apex+pro+huntsman&i=computers"
+    min_price_floor: 65.0
+    category_blacklist:
+      - "alfombrilla"
+      - "tapete"
+      - "mousepad"
+      - "reposamuñecas"
+      - "keycaps"
+      - "pegatinas"
+      - "combo teclado raton economico"
+
+  - id: "ram"
+    name: "Memória RAM (Média-Alta e Alta: DDR5 32GB/64GB 6000MHz+)"
+    search_query: "ram ddr5 32gb 64gb 6000mhz cl30 trident z5 dominator vengeance"
+    url_path: "/s?k=ram+ddr5+32gb+64gb+6000mhz+trident+z5&i=computers"
+    min_price_floor: 60.0
+    category_blacklist:
+      - "8gb"
+      - "ddr3"
+      - "ddr2"
+      - "sodimm 4gb"
+
+  - id: "storage_ssd"
+    name: "Armazenamento SSD NVMe (High-End: 2TB/4TB PCIe 4.0/5.0)"
+    search_query: "ssd nvme 2tb 4tb 990 pro sn850x kc3000 t700"
+    url_path: "/s?k=ssd+nvme+2tb+4tb+990+pro+sn850x&i=computers"
+    min_price_floor: 75.0
+    category_blacklist:
+      - "carcasa nvme"
+      - "caja externa"
+      - "disipador nvme"
+      - "500gb"
+      - "250gb"
+      - "sata 2.5"
+
+  - id: "routers"
+    name: "Routers Gaming High-End (Wi-Fi 6E / Wi-Fi 7)"
+    search_query: "router gaming wifi 6e wifi 7 asus rog rapture netgear nighthawk"
+    url_path: "/s?k=router+gaming+wifi+6e+wifi+7+asus+rog&i=computers"
+    min_price_floor: 110.0
+    category_blacklist:
+      - "repetidor"
+      - "extensor wifi"
+      - "switch gigabit"
+      - "antena wifi usb"
+
+  - id: "smartphones"
+    name: "Smartphones Gama Média-Alta e Topo (iPhone Pro, Galaxy S Ultra, Pixel Pro)"
+    search_query: "iphone 15 pro 16 pro galaxy s24 ultra s25 pixel 9 pro fold"
+    url_path: "/s?k=iphone+15+pro+galaxy+s24+ultra+pixel+8+pro&i=electronics"
+    min_price_floor: 380.0
+    category_blacklist:
+      - "galaxy a0"
+      - "galaxy a1"
+      - "galaxy a2"
+      - "redmi 10"
+      - "redmi 12"
+      - "redmi 13"
+      - "poco c"
+      - "poco m"
+      - "moto e"
+
+  - id: "tablets"
+    name: "Tablets Gama Média-Alta e Topo (iPad Pro/Air, Galaxy Tab S9/S10)"
+    search_query: "ipad air ipad pro galaxy tab s9 s10 ultra xiaomi pad 6 pro"
+    url_path: "/s?k=ipad+air+ipad+pro+galaxy+tab+s9&i=computers"
+    min_price_floor: 320.0
+    category_blacklist:
+      - "lapiz optico"
+      - "stylus"
+      - "teclado para tablet"
+      - "tab a"
+      - "tab a9"
+      - "fire hd"
+      - "pad se"
+      - "redmi pad se"

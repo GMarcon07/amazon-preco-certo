@@ -1,0 +1,14 @@
+services:
+  amazon-price-monitor:
+    build: .
+    container_name: amazon_preco_certo
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Persistir a base de dados SQLite e logs fora do contentor
+      - ./data:/app/data
+      # Permitir editar configurações sem reconstruir a imagem
+      - ./config/config.yaml:/app/config/config.yaml:ro
+    environment:
+      - TZ=Europe/Madrid

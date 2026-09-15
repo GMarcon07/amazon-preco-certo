@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Database (ignorar temporários wal/shm)
+*.db-wal
+*.db-shm
+data/*.log
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
