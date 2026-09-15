@@ -7,6 +7,12 @@ on:
   
   # Permite disparar o scan manualmente a qualquer momento atraves do botao "Run workflow"
   workflow_dispatch:
+    inputs:
+      test_discord:
+        description: 'Enviar mensagem de teste ao Discord para validar conexao'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -30,6 +36,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: 🔔 Validar Conexao ao Discord via Webhook
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_discord }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python run.py --test-discord
 
       - name: 🌐 Instalar Chromium e Dependencias de Sistema do Playwright
         run: |
